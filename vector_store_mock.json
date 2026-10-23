@@ -1,0 +1,17 @@
+[
+    {
+        "source": "openedge_audit_log",
+        "id": "SEC-1001",
+        "content": "Security Audit Event ID: SEC-1001\nUser: admin_root\nAction Type: FAILED_SSH_LOGIN\nTimestamp: 10/22/2026 20:08:51.189\nDetails: Multiple failed root login attempts detected from untrusted external subnet."
+    },
+    {
+        "source": "openedge_audit_log",
+        "id": "SEC-1003",
+        "content": "Security Audit Event ID: SEC-1003\nUser: sys_daemon\nAction Type: UNAUTHORIZED_FILE_ACCESS\nTimestamp: 10/22/2026 20:08:51.189\nDetails: Attempted read access to restricted /etc/shadow backup file without proper clearance."
+    },
+    {
+        "source": "compliance_baseline",
+        "id": "iso27001_security_policy.md",
+        "content": "\ufeff# ISO 27001 & OpenEdge Security Compliance Baseline\n\n## 1. Access Control & Authentication Policy (A.9)\n- All administrative access, especially root or superuser accounts (e.g., \u0007dmin_root), must enforce multi-factor authentication and strict IP subnet restrictions.\n- Multiple failed login attempts (e.g., FAILED_SSH_LOGIN) from untrusted external subnets trigger an immediate security alert and automated account lockout protocols.\n\n## 2. File Integrity & System Hardening (A.12 & A.14)\n- Unauthorized read or write access attempts to sensitive system files, backup configurations, or security databases (e.g., /etc/shadow backup files or PAS for OpenEdge keystores) must be logged as High Severity (Severity 2 or 3).\n- Production environments must restrict file system permissions using principle of least privilege.\n"
+    }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "event_id": "SEC-1001",
+    "user_name": "admin_root",
+    "action_type": "FAILED_SSH_LOGIN",
+    "timestamp": "10\/22\/2026 20:08:51.189",
+    "details": "Multiple failed root login attempts detected from untrusted external subnet."
+  },
+  {
+    "event_id": "SEC-1003",
+    "user_name": "sys_daemon",
+    "action_type": "UNAUTHORIZED_FILE_ACCESS",
+    "timestamp": "10\/22\/2026 20:08:51.189",
+    "details": "Attempted read access to restricted \/etc\/shadow backup file without proper clearance."
+  }
+]
