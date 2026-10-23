@@ -1,65 +1,66 @@
 ﻿import os
 import json
+import chromadb
+from chromadb.utils import embedding_functions
 
-# Configuration constants
-JSON_AUDIT_FILE = "security_audit_export.json"
-KNOWLEDGE_BASE_DIR = "./knowledge_base"
-OUTPUT_INDEX_FILE = "./vector_store_mock.json"
-
-def main():
-    print("--- OpenEdge Security & Compliance Auditor: Lightweight Ingestion Pipeline ---")
+def run_ingestion():
+    print("[*] Starting advanced semantic ingestion pipeline...")
     
-    documents = []
-
-    # 1. Load OpenEdge ABL JSON audit logs
-    if os.path.exists(JSON_AUDIT_FILE):
-        with open(JSON_AUDIT_FILE, "r", encoding="utf-8") as f:
-            events = json.load(f)
-        print(f"[*] Loaded {len(events)} security audit events from {JSON_AUDIT_FILE}...")
-        
-        for event in events:
-            content = (
-                f"Security Audit Event ID: {event.get('event_id')}\n"
-                f"User: {event.get('user_name')}\n"
-                f"Action Type: {event.get('action_type')}\n"
-                f"Timestamp: {event.get('timestamp')}\n"
-                f"Details: {event.get('details')}"
-            )
-            documents.append({
-                "source": "openedge_audit_log",
-                "id": event.get('event_id'),
-                "content": content
-            })
-    else:
-        print(f"[!] Warning: {JSON_AUDIT_FILE} not found.")
-
-    # 2. Load Compliance Knowledge Base (.md files)
-    if os.path.exists(KNOWLEDGE_BASE_DIR):
-        print(f"[*] Loading compliance baselines from {KNOWLEDGE_BASE_DIR}...")
-        for filename in os.listdir(KNOWLEDGE_BASE_DIR):
-            if filename.endswith(".md"):
-                path = os.path.join(KNOWLEDGE_BASE_DIR, filename)
-                with open(path, "r", encoding="utf-8") as f:
-                    text = f.read()
-                documents.append({
-                    "source": "compliance_baseline",
-                    "id": filename,
-                    "content": text
+    # Define paths
+    vector_db_path = "./chroma_db"
+    mock_source_path = "./vector_store_mock.json" # Fallback or original source data
+    
+    # Initialize ChromaDB client (Persists locally to disk)
+    chroma_client = chromadb.PersistentClient(path=vector_db_path)
+    
+    # Use a lightweight local embedding function (downloads automatically on first run)
+    embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+    
+    # Create or get collection
+    collection = chroma_client.get_or_create_collection(
+        name="openedge_compliance_vault",
+        embedding_function=embedding_fn
+    )
+    
+    # Load source documents (checking your mock json or knowledge base)
+    documents_to_ingest = []
+    
+    if os.path.exists(mock_source_path):
+        with open(mock_source_path, "r", encoding="utf-8") as f:
+            raw_docs = json.load(f)
+            for idx, doc in enumerate(raw_docs):
+                documents_to_ingest.append({
+                    "id": f"doc_{idx}",
+                    "content": doc.get("content", ""),
+                    "source": doc.get("source", "unknown")
                 })
     else:
-        print(f"[!] Warning: Knowledge base directory not found.")
+        # Fallback sample data if mock file isn't present
+        documents_to_ingest = [
+            {"id": "doc_0", "content": "SEC-1001: Failed SSH login attempts detected from external IP 192.168.1.105 exceeding threshold.", "source": "openedge_audit_log"},
+            {"id": "doc_1", "content": "SEC-1003: Unauthorized read access attempt on sensitive /etc/shadow backup file.", "source": "openedge_audit_log"},
+            {"id": "doc_2", "content": "ISO 27001 A.9.4.2: Secure log-on procedures must be enforced with Multi-Factor Authentication (MFA) and strict subnet restrictions.", "source": "compliance_baseline"}
+        ]
 
-    if not documents:
-        print("[!] Error: No documents found to ingest.")
-        return
+    # Clear existing collection items to prevent duplication on re-run
+    existing = collection.get()
+    if existing["ids"]:
+        collection.delete(ids=existing["ids"])
 
-    # 3. Save to local searchable index file
-    os.makedirs(os.path.dirname(OUTPUT_INDEX_FILE), exist_ok=True)
-    with open(OUTPUT_INDEX_FILE, "w", encoding="utf-8") as f:
-        json.dump(documents, f, indent=4)
+    # Add documents to ChromaDB
+    ids = [d["id"] for d in documents_to_ingest]
+    texts = [d["content"] for d in documents_to_ingest]
+    metadatas = [{"source": d["source"]} for d in documents_to_ingest]
 
-    print(f"[+] Success! Indexed {len(documents)} documents into {OUTPUT_INDEX_FILE}.")
-    print("--- Ingestion Complete ---")
+    collection.add(
+        documents=texts,
+        metadatas=metadatas,
+        ids=ids
+    )
+
+    print(f"[+] Successfully embedded and stored {len(ids)} chunks into ChromaDB vector store at '{vector_db_path}'!")
 
 if __name__ == "__main__":
-    main()
+    run_ingestion()

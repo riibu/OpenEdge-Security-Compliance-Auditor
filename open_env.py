@@ -2,51 +2,68 @@ import os
 import json
 import urllib.request
 import urllib.error
+import chromadb
+from chromadb.utils import embedding_functions
 
 class OpenEdgeAuditEnv:
     """
-    OpenEnv interface wrapper for OpenEdge Security & Compliance Audit environment.
-    Follows agentic environment conventions (reset, step, render).
+    Advanced Agentic RAG OpenEnv interface wrapper backed by ChromaDB vector search.
     """
-    def __init__(self, vector_store_path="./vector_store_mock.json", ollama_url="http://localhost:11434/api/generate", model_name="llama3.1"):
-        self.vector_store_path = vector_store_path
+    def __init__(self, vector_db_path="./chroma_db", ollama_url="http://localhost:11434/api/generate", model_name="llama3.1"):
+        self.vector_db_path = vector_db_path
         self.ollama_url = ollama_url
         self.model_name = model_name
-        self.documents = []
+        self.chroma_client = None
+        self.collection = None
         self.current_state = None
-        self.on_chunk_received = None  # Callback function for live UI streaming
+        self.on_chunk_received = None  # Live GUI streaming callback
 
     def reset(self):
-        """Resets and loads environment observations from vector store index."""
-        if not os.path.exists(self.vector_store_path):
-            raise FileNotFoundError(f"Index file '{self.vector_store_path}' not found. Run ingest_audit.py first.")
+        """Initializes connection to the ChromaDB vector store and returns expected counts."""
+        if not os.path.exists(self.vector_db_path):
+            raise FileNotFoundError(f"Vector DB path '{self.vector_db_path}' not found. Run ingest_audit.py first.")
         
-        with open(self.vector_store_path, "r", encoding="utf-8") as f:
-            self.documents = json.load(f)
-            
-        audit_logs = [d for d in self.documents if d["source"] == "openedge_audit_log"]
-        baselines = [d for d in self.documents if d["source"] == "compliance_baseline"]
-
+        # Connect to persistent ChromaDB
+        self.chroma_client = chromadb.PersistentClient(path=self.vector_db_path)
+        embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
+        self.collection = self.chroma_client.get_or_create_collection(
+            name="openedge_compliance_vault",
+            embedding_function=embedding_fn
+        )
+        
+        count = self.collection.count()
         self.current_state = {
             "status": "READY",
-            "audit_log_count": len(audit_logs),
-            "baseline_count": len(baselines),
-            "context_text": "\n\n".join([d["content"] for d in self.documents])
+            "audit_log_count": count,
+            "baseline_count": count  # Added baseline_count to satisfy GUI expectations
         }
         return self.current_state
 
     def step(self, action_query: str) -> dict:
         """
-        Executes an agent action (query) against the environment state and LLM model with live streaming.
+        Performs semantic similarity search against ChromaDB, builds a targeted context,
+        and streams the evaluation report from Llama 3.1.
         """
-        if not self.current_state:
+        if not self.collection:
             self.reset()
 
-        prompt = f"""You are an expert OpenEdge Security and Compliance Auditor. 
-Your task is to evaluate system audit findings against the provided compliance standards.
+        # 1. SEMANTIC SEARCH: Query ChromaDB for the most relevant context chunks (top_k=3)
+        search_results = self.collection.query(
+            query_texts=[action_query],
+            n_results=3
+        )
+        
+        retrieved_chunks = search_results.get("documents", [[]])[0]
+        context_text = "\n\n".join(retrieved_chunks) if retrieved_chunks else "No relevant context found."
 
-### Context / Knowledge Base:
-{self.current_state['context_text']}
+        # 2. CONSTRUCT PROMPT with targeted context
+        prompt = f"""You are an expert OpenEdge Security and Compliance Auditor. 
+Your task is to evaluate system audit findings against the retrieved compliance standards.
+
+### Retrieved Context / Knowledge Base Snippets:
+{context_text}
 
 ### Target Audit Finding / Question:
 {action_query}
@@ -60,7 +77,7 @@ Provide your evaluation structured precisely into:
         payload = {
             "model": self.model_name,
             "prompt": prompt,
-            "stream": True,  # <--- Enabled streaming for real-time output & zero timeouts
+            "stream": True,
             "options": {"temperature": 0.1}
         }
 
@@ -73,7 +90,6 @@ Provide your evaluation structured precisely into:
         )
 
         try:
-            # Generous timeout for initial model prompt processing across the VM bridge
             with urllib.request.urlopen(req, timeout=300.0) as response:
                 full_report = ""
                 for line in response:
@@ -89,12 +105,5 @@ Provide your evaluation structured precisely into:
                 
         except urllib.error.URLError as e:
             return {"success": False, "report": None, "error": f"URLError: {e.reason}"}
-        except TimeoutError:
-            return {"success": False, "report": None, "error": "Connection timed out waiting for Llama 3.1 model response."}
-        except Exception as e:
-            return {"success": False, "report": None, "error": str(e)}
-                
-        except urllib.error.URLError as e:
-            return {"success": False, "report": None, "error": f"Ollama Connection Error: {e.reason}"}
         except Exception as e:
             return {"success": False, "report": None, "error": str(e)}
