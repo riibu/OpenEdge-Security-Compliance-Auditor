@@ -39,27 +39,30 @@ class OpenEdgeGUI:
         self.btn_agent = tk.Button(btn_frame, text="3. Execute Compliance Audit", command=self.run_agent_thread, bg="#845b2b", fg="white", font=("Arial", 10, "bold"), width=25)
         self.btn_agent.grid(row=0, column=2, padx=5, pady=5)
 
-        # Secondary Row (PDF Upload & Word Export)
+        # Secondary Row (PDF Upload, Live PAS Logs, & Word Export)
         btn_frame_2 = tk.Frame(root)
         btn_frame_2.pack(pady=5)
 
-        self.btn_pdf = tk.Button(btn_frame_2, text="4. Upload & Ingest PDF Policy", command=self.upload_and_ingest_pdf, bg="#5b2b84", fg="white", font=("Arial", 10, "bold"), width=30)
-        self.btn_pdf.grid(row=0, column=0, padx=5, pady=5)
+        self.btn_pdf = tk.Button(btn_frame_2, text="4. Upload & Ingest PDF", command=self.upload_and_ingest_pdf, bg="#5b2b84", fg="white", font=("Arial", 10, "bold"), width=24)
+        self.btn_pdf.grid(row=0, column=0, padx=4, pady=5)
 
-        self.btn_export = tk.Button(btn_frame_2, text="5. Export Report (.docx)", command=self.export_report, bg="#842b5b", fg="white", font=("Arial", 10, "bold"), width=30)
-        self.btn_export.grid(row=0, column=1, padx=5, pady=5)
+        self.btn_pas = tk.Button(btn_frame_2, text="5. Ingest Live PAS Logs", command=self.run_pas_ingestion, bg="#2b8484", fg="white", font=("Arial", 10, "bold"), width=24)
+        self.btn_pas.grid(row=0, column=1, padx=4, pady=5)
+
+        self.btn_export = tk.Button(btn_frame_2, text="6. Export Report (.docx)", command=self.export_report, bg="#842b5b", fg="white", font=("Arial", 10, "bold"), width=24)
+        self.btn_export.grid(row=0, column=2, padx=4, pady=5)
 
         # --- CUSTOM QUERY INPUT FRAME ---
         query_frame = tk.Frame(root)
         query_frame.pack(fill=tk.X, padx=15, pady=8)
 
-        query_label = tk.Label(query_frame, text="Custom Audit Prompt / Query (Targeting Ingested Docs):", font=("Arial", 9, "bold"), anchor="w")
+        query_label = tk.Label(query_frame, text="Custom Audit Prompt / Query (Targeting Ingested Docs & Telemetry):", font=("Arial", 9, "bold"), anchor="w")
         query_label.pack(fill=tk.X, pady=2)
 
         self.query_entry = tk.Entry(query_frame, font=("Consolas", 10), bg="#2d2d2d", fg="#ffffff", insertbackground="white")
         self.query_entry.pack(fill=tk.X, expand=True, ipady=4)
-        # Default query referencing assessment requirements
-        self.query_entry.insert(0, "Analyze the vulnerability assessment and risk analysis requirements from the uploaded PDF against ISO 27001 baselines.")
+        # Default query referencing security telemetry and PDF compliance
+        self.query_entry.insert(0, "Analyze live PASOE security events and vulnerability assessment requirements against ISO 27001 baselines.")
 
         # Output Terminal Frame (ScrolledText)
         terminal_frame = tk.Frame(root)
@@ -74,7 +77,7 @@ class OpenEdgeGUI:
         # Set up streaming callback for OpenEnv
         self.env.on_chunk_received = self.stream_to_terminal
 
-        self.log_to_terminal("[+] System ready. Upload a PDF via button 4, type your custom question above, and hit button 3!\n")
+        self.log_to_terminal("[+] System ready. Ingest PDFs or live PAS logs, type your query above, and hit button 3!\n")
 
     def log_to_terminal(self, message):
         """Helper to write messages to the GUI terminal safely."""
@@ -187,6 +190,18 @@ class OpenEdgeGUI:
 
         except Exception as e:
             self.log_to_terminal(f"[!] PDF Ingestion Error: {str(e)}")
+            messagebox.showerror("Error", str(e))
+
+    def run_pas_ingestion(self):
+        """Triggers live PAS for OpenEdge log telemetry ingestion."""
+        self.log_to_terminal(f"\n[*] Triggering live PAS for OpenEdge log telemetry ingestion...")
+        import ingest_pas_logs
+        try:
+            count = ingest_pas_logs.ingest_live_pas_logs()
+            self.log_to_terminal(f"[+] PASOE Telemetry Ingested Successfully! ({count} live security events added to ChromaDB)")
+            messagebox.showinfo("PASOE Ingestion", f"Successfully synced {count} live PAS for OpenEdge events into the vector store!")
+        except Exception as e:
+            self.log_to_terminal(f"[!] PAS Ingestion Error: {str(e)}")
             messagebox.showerror("Error", str(e))
 
     def export_report(self):
