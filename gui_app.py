@@ -14,7 +14,7 @@ class OpenEdgeGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("OpenEdge Security & Compliance Auditor (Agentic RAG)")
-        self.root.geometry("900x700")
+        self.root.geometry("900x740")
         
         # Initialize OpenEnv
         self.env = OpenEdgeAuditEnv()
@@ -24,44 +24,56 @@ class OpenEdgeGUI:
         
         # Title Label
         title_label = tk.Label(root, text="🛡️ OpenEdge Autonomous Compliance Auditor", font=("Arial", 16, "bold"))
-        title_label.pack(pady=10)
+        title_label.pack(pady=8)
 
-        # Control Panel Frame (Primary Buttons)
+        # Control Panel Frame (Primary Buttons: 1, 2, 3)
         btn_frame = tk.Frame(root)
-        btn_frame.pack(pady=5)
+        btn_frame.pack(pady=3)
 
-        self.btn_ingest = tk.Button(btn_frame, text="1. Run Data Ingestion", command=self.run_ingestion_thread, bg="#2b5b84", fg="white", font=("Arial", 10, "bold"), width=22)
-        self.btn_ingest.grid(row=0, column=0, padx=5, pady=5)
+        self.btn_ingest = tk.Button(btn_frame, text="1. Run Data Ingestion", command=self.run_ingestion_thread, bg="#2b5b84", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_ingest.grid(row=0, column=0, padx=4, pady=3)
 
-        self.btn_reset = tk.Button(btn_frame, text="2. Reset OpenEnv", command=self.reset_env, bg="#2b845b", fg="white", font=("Arial", 10, "bold"), width=22)
-        self.btn_reset.grid(row=0, column=1, padx=5, pady=5)
+        self.btn_reset = tk.Button(btn_frame, text="2. Reset OpenEnv", command=self.reset_env, bg="#2b845b", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_reset.grid(row=0, column=1, padx=4, pady=3)
 
-        self.btn_agent = tk.Button(btn_frame, text="3. Execute Compliance Audit", command=self.run_agent_thread, bg="#845b2b", fg="white", font=("Arial", 10, "bold"), width=25)
-        self.btn_agent.grid(row=0, column=2, padx=5, pady=5)
+        self.btn_agent = tk.Button(btn_frame, text="3. Execute Compliance Audit", command=self.run_agent_thread, bg="#845b2b", fg="white", font=("Arial", 9, "bold"), width=24)
+        self.btn_agent.grid(row=0, column=2, padx=4, pady=3)
 
-        # Secondary Row (PDF Upload, Live PAS Logs, & Word Export)
+        # Secondary Row (Buttons: 4, 5, 6)
         btn_frame_2 = tk.Frame(root)
-        btn_frame_2.pack(pady=5)
+        btn_frame_2.pack(pady=3)
 
-        self.btn_pdf = tk.Button(btn_frame_2, text="4. Upload & Ingest PDF", command=self.upload_and_ingest_pdf, bg="#5b2b84", fg="white", font=("Arial", 10, "bold"), width=24)
-        self.btn_pdf.grid(row=0, column=0, padx=4, pady=5)
+        self.btn_pdf = tk.Button(btn_frame_2, text="4. Upload & Ingest PDF", command=self.upload_and_ingest_pdf, bg="#5b2b84", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_pdf.grid(row=0, column=0, padx=4, pady=3)
 
-        self.btn_pas = tk.Button(btn_frame_2, text="5. Ingest Live PAS Logs", command=self.run_pas_ingestion, bg="#2b8484", fg="white", font=("Arial", 10, "bold"), width=24)
-        self.btn_pas.grid(row=0, column=1, padx=4, pady=5)
+        self.btn_pas = tk.Button(btn_frame_2, text="5. Ingest Live PAS Logs", command=self.run_pas_ingestion, bg="#2b8484", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_pas.grid(row=0, column=1, padx=4, pady=3)
 
-        self.btn_export = tk.Button(btn_frame_2, text="6. Export Report (.docx)", command=self.export_report, bg="#842b5b", fg="white", font=("Arial", 10, "bold"), width=24)
-        self.btn_export.grid(row=0, column=2, padx=4, pady=5)
+        self.btn_export = tk.Button(btn_frame_2, text="6. Export Report (.docx)", command=self.export_report, bg="#842b5b", fg="white", font=("Arial", 9, "bold"), width=24)
+        self.btn_export.grid(row=0, column=2, padx=4, pady=3)
+
+        # Third Row (Advanced Enterprise Features: Buttons 7, 8, 9)
+        btn_frame_3 = tk.Frame(root)
+        btn_frame_3.pack(pady=3)
+
+        self.btn_patch = tk.Button(btn_frame_3, text="7. Patch ABL Code", command=self.run_abl_patch, bg="#845b00", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_patch.grid(row=0, column=0, padx=4, pady=3)
+
+        self.btn_tde = tk.Button(btn_frame_3, text="8. Audit TDE Encryption", command=self.run_tde_audit, bg="#005b84", fg="white", font=("Arial", 9, "bold"), width=22)
+        self.btn_tde.grid(row=0, column=1, padx=4, pady=3)
+
+        self.btn_api = tk.Button(btn_frame_3, text="9. Launch FastAPI Gateway", command=self.start_fastapi_server, bg="#00845b", fg="white", font=("Arial", 9, "bold"), width=24)
+        self.btn_api.grid(row=0, column=2, padx=4, pady=3)
 
         # --- CUSTOM QUERY INPUT FRAME ---
         query_frame = tk.Frame(root)
-        query_frame.pack(fill=tk.X, padx=15, pady=8)
+        query_frame.pack(fill=tk.X, padx=15, pady=6)
 
         query_label = tk.Label(query_frame, text="Custom Audit Prompt / Query (Targeting Ingested Docs & Telemetry):", font=("Arial", 9, "bold"), anchor="w")
         query_label.pack(fill=tk.X, pady=2)
 
         self.query_entry = tk.Entry(query_frame, font=("Consolas", 10), bg="#2d2d2d", fg="#ffffff", insertbackground="white")
         self.query_entry.pack(fill=tk.X, expand=True, ipady=4)
-        # Default query referencing security telemetry and PDF compliance
         self.query_entry.insert(0, "Analyze live PASOE security events and vulnerability assessment requirements against ISO 27001 baselines.")
 
         # Output Terminal Frame (ScrolledText)
@@ -77,7 +89,7 @@ class OpenEdgeGUI:
         # Set up streaming callback for OpenEnv
         self.env.on_chunk_received = self.stream_to_terminal
 
-        self.log_to_terminal("[+] System ready. Ingest PDFs or live PAS logs, type your query above, and hit button 3!\n")
+        self.log_to_terminal("[+] System ready. All 9 operational buttons loaded successfully!\n")
 
     def log_to_terminal(self, message):
         """Helper to write messages to the GUI terminal safely."""
@@ -123,7 +135,6 @@ class OpenEdgeGUI:
         """Executes the multi-step ReAct compliance audit using the user's custom query input."""
         self.terminal.delete("1.0", tk.END)
         
-        # Grab custom query from the text input field
         query = self.query_entry.get().strip()
         if not query:
             query = "Analyze high-severity security events against ISO 27001 baselines."
@@ -179,14 +190,14 @@ class OpenEdgeGUI:
                 embedding_function=embedding_fn
             )
 
-            ids = [d["id"] for d in pdf_chunks]
-            texts = [d["content"] for d in pdf_chunks]
-            metadatas = [{"source": d["source"]} for d in pdf_chunks]
-
-            collection.add(documents=texts, metadatas=metadatas, ids=ids)
+            collection.add(
+                documents=[d["content"] for d in pdf_chunks],
+                metadatas=[{"source": d["source"]} for d in pdf_chunks],
+                ids=[d["id"] for d in pdf_chunks]
+            )
             
-            self.log_to_terminal(f"[+] Successfully embedded and indexed {len(ids)} chunks from PDF into ChromaDB!")
-            messagebox.showinfo("PDF Ingested", f"Successfully ingested {len(ids)} pages from {os.path.basename(pdf_path)} into the vector store!")
+            self.log_to_terminal(f"[+] Successfully indexed {len(pdf_chunks)} chunks from PDF into ChromaDB!")
+            messagebox.showinfo("PDF Ingested", f"Successfully ingested {len(pdf_chunks)} pages from {os.path.basename(pdf_path)}!")
 
         except Exception as e:
             self.log_to_terminal(f"[!] PDF Ingestion Error: {str(e)}")
@@ -198,16 +209,64 @@ class OpenEdgeGUI:
         import ingest_pas_logs
         try:
             count = ingest_pas_logs.ingest_live_pas_logs()
-            self.log_to_terminal(f"[+] PASOE Telemetry Ingested Successfully! ({count} live security events added to ChromaDB)")
-            messagebox.showinfo("PASOE Ingestion", f"Successfully synced {count} live PAS for OpenEdge events into the vector store!")
+            self.log_to_terminal(f"[+] PASOE Telemetry Ingested Successfully! ({count} events added)")
+            messagebox.showinfo("PASOE Ingestion", f"Successfully synced {count} live PAS events into ChromaDB!")
         except Exception as e:
             self.log_to_terminal(f"[!] PAS Ingestion Error: {str(e)}")
             messagebox.showerror("Error", str(e))
 
+    def run_abl_patch(self):
+        """Triggers autonomous ABL security patching on selected files."""
+        file_path = filedialog.askopenfilename(
+            title="Select OpenEdge ABL Script (.p or .cls)",
+            filetypes=[("ABL Code", "*.p *.cls *.txt"), ("All Files", "*.*")]
+        )
+        if not file_path:
+            return
+
+        self.log_to_terminal(f"\n[*] Running autonomous security patch generator on: {os.path.basename(file_path)}...")
+        try:
+            import abl_patch_generator
+            result = abl_patch_generator.analyze_and_patch_abl_code(file_path)
+            self.log_to_terminal(f"[+] Patch Generated Successfully! Saved as: {result['patched_file']}")
+            for v in result['vulnerabilities']:
+                self.log_to_terminal(f"    - {v}")
+            messagebox.showinfo("Patch Complete", f"Secure patch generated at:\n{result['patched_file']}")
+        except Exception as e:
+            self.log_to_terminal(f"[!] ABL Patch Error: {str(e)}")
+            messagebox.showerror("Error", str(e))
+
+    def run_tde_audit(self):
+        """Triggers database Transparent Data Encryption compliance check."""
+        self.log_to_terminal(f"\n[*] Auditing OpenEdge Transparent Data Encryption (TDE)...")
+        try:
+            import tde_compliance_check
+            findings = tde_compliance_check.audit_tde_configuration()
+            self.log_to_terminal(f"[+] TDE Audit Finished: {len(findings)} cryptographic gaps detected.")
+            for f in findings:
+                self.log_to_terminal(f"    - [{f['severity']}] {f['control']}: {f['issue']}")
+            messagebox.showinfo("TDE Audit Complete", f"Audit finished! Found {len(findings)} security gaps. Check terminal.")
+        except Exception as e:
+            self.log_to_terminal(f"[!] TDE Audit Error: {str(e)}")
+            messagebox.showerror("Error", str(e))
+
+    def start_fastapi_server(self):
+        """Launches the FastAPI real-time webhook gateway in a background thread."""
+        def run_server():
+            try:
+                import uvicorn
+                self.log_to_terminal("\n[+] Launching FastAPI Security Gateway on http://127.0.0.1:8001...")
+                uvicorn.run("gateway_api:app", host="127.0.0.1", port=8001, log_level="error")
+            except Exception as e:
+                self.log_to_terminal(f"[!] FastAPI Gateway Error: {str(e)}")
+
+        threading.Thread(target=run_server, daemon=True).start()
+        messagebox.showinfo("Gateway Launched", "FastAPI background server started on http://127.0.0.1:8001!\nWebhooks can now hit /api/v1/audit.")
+
     def export_report(self):
         """Exports the generated report into a professional .docx Word document."""
         if not self.last_generated_report:
-            messagebox.showwarning("No Report", "Please execute a compliance audit first to generate a report before exporting.")
+            messagebox.showwarning("No Report", "Please execute a compliance audit first to generate a report.")
             return
 
         file_path = filedialog.asksaveasfilename(
