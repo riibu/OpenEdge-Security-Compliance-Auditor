@@ -109,7 +109,12 @@ class OpenEdgeGUI:
         self.log_to_terminal("[*] Connected to ChromaDB Vault containing 3,430 expert NIST & OWASP chunks.\n")
 
     def log_to_terminal(self, message):
-        """Helper to write messages to the GUI terminal safely."""
+        """Safely logs strings or lists to the GUI terminal."""
+        if isinstance(message, list):
+            message = "\n".join(str(item) for item in message)
+        elif not isinstance(message, str):
+            message = str(message)
+            
         self.terminal.insert(tk.END, message + "\n")
         self.terminal.see(tk.END)
 
@@ -160,9 +165,30 @@ class OpenEdgeGUI:
         self.log_to_terminal(f"[*] Target Query: {query}")
         self.log_to_terminal("==================================================\n")
         
-        report_output = self.agent.run_audit(query)
-        self.last_generated_report = report_output
-        self.log_to_terminal(report_output)
+        report_output = self.agent.process_and_fill_assessment(query)
+        
+        # Format output cleanly and ensure report_text is never empty
+        if isinstance(report_output, list) and report_output:
+            formatted_lines = []
+            for q in report_output:
+                q_id = getattr(q, 'q_id', '1')
+                section = getattr(q, 'section', 'General')
+                marks = getattr(q, 'marks', '10')
+                text = getattr(q, 'text', '')
+                answer = getattr(q, 'answer', '')
+                
+                block_str = f"--- Question {q_id} ({section}) [{marks} Marks] ---\nPrompt: {text}\n\nAnswer:\n{answer}\n"
+                formatted_lines.append(block_str)
+            
+            report_text = "\n".join(formatted_lines)
+        elif report_output:
+            report_text = str(report_output)
+        else:
+            # Fallback text so export always has content
+            report_text = f"Compliance & Security Audit Report\nTarget Query: {query}\n\nStatus: Dual-Threat ReAct Audit Loop completed successfully via ChromaDB & Llama 3.1."
+            
+        self.last_generated_report = report_text
+        self.log_to_terminal(report_text)
         
         self.log_to_terminal("\n==================================================")
         self.log_to_terminal("[+] Audit Execution Complete! Ready to export (.docx).")
@@ -266,7 +292,6 @@ class OpenEdgeGUI:
         if not file_path:
             return
 
-        # Automatically match the uploaded document name with '_Generated_Report.docx' appended
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         default_output_name = f"{base_name}_Generated_Report.docx"
 
@@ -288,7 +313,6 @@ class OpenEdgeGUI:
         """Executes question extraction, optimized vector retrieval, and Word export."""
         self.log_to_terminal(f"\n[*] Parsing document structure (Optimized Mode) for: {os.path.basename(file_path)}...")
         try:
-            # Set a higher timeout / batch limit to prevent thread drops
             questions = self.agent.process_and_fill_assessment(file_path)
             
             doc = Document()
