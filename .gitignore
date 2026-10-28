@@ -1,14 +1,15 @@
-# Python / Bytecode
+# Python caches & virtual environments
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Environment / IDE
 .venv/
 env/
-.vscode/
-.idea/
 
-# OS Specific
+# ChromaDB local vector storage & sqlite files
+chroma_db/
+*.sqlite3
+
+# Generated reports & OS files
+*.docx
+*.pdf
 .DS_Store
 Thumbs.db
