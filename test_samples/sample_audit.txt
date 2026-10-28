@@ -1,0 +1,12 @@
+====================================================
+OPENEDGE ENTERPRISE APPLICATION SECURITY & COMPLIANCE ASSESSMENT
+Target Environment: PASOE (Progress Application Server for OpenEdge)
+====================================================
+
+1. DATA ENCRYPTION AND PROTECTION CONTROLS
+- Requirement 1.1: Transparent Data Encryption (TDE) must be enabled for all production database tables containing PII.
+- Requirement 1.2: All data in transit between clients and PASOE agents must enforce strict TLS 1.3 encryption.
+
+2. AUTHENTICATION AND ACCESS MANAGEMENT
+- Requirement 2.1: Multi-Factor Authentication (MFA) must be enforced for all administrative dashboard access.
+- Requirement 2.2: Client-principal tokens used across AppServer boundaries must carry valid cryptographic signatures.

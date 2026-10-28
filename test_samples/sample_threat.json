@@ -1,0 +1,7 @@
+{
+  "scenario_id": "SCN-OE-2026-001",
+  "title": "PASOE Unauthenticated Procedure Execution Risk",
+  "component": "Progress Application Server for OpenEdge (PASOE)",
+  "description": "An external attacker attempts to invoke unauthorized ABL routines via HTTP endpoints without valid client-principal authentication tokens.",
+  "expected_mitigation": "Enforce strict transport security and validate client-principal signatures on every request."
+}

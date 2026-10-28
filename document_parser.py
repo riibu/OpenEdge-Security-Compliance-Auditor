@@ -1,36 +1,33 @@
-import re
+import os
 from pypdf import PdfReader
+import re
 
 class QuestionBlock:
-    def __init__(self, section, q_id, text, marks, answer_slot_index):
-        self.section = section        # e.g., "SECTION D: Memory, Storage and Log Analysis"
-        self.q_id = q_id              # e.g., "4.1"
-        self.text = text              # e.g., "Analyse the memory-string artefact summary..."
-        self.marks = marks            # e.g., 10
-        self.answer = ""
+    def __init__(self, raw_text=""):
+        self.raw_text = raw_text
 
-def extract_structured_questions(pdf_path):
-    reader = PdfReader(pdf_path)
-    full_text = "\n".join([page.extract_text() for page in reader.pages])
+def extract_structured_questions(file_path):
+    """
+    Extracts text from either a PDF or a plain text (.txt) file 
+    and returns structured question blocks.
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    text = ""
     
-    # Regex pattern to identify question patterns like "4.1 Analyse the..." or "Question 4.1"
-    question_pattern = re.compile(
-        r'(SECTION\s+[A-Z]:[^\n]+)?\n*(\d+\.\d+)\s+([^\n\[]+)\[(\d+)\]', 
-        re.MULTILINE
-    )
-    
-    questions = []
-    current_section = "General"
-    
-    for match in question_pattern.finditer(full_text):
-        sec, q_id, q_text, marks = match.groups()
-        if sec:
-            current_section = sec.strip()
-        questions.append(QuestionBlock(
-            section=current_section,
-            q_id=q_id.strip(),
-            text=q_text.strip(),
-            marks=int(marks),
-            answer_slot_index=match.end()
-        ))
-    return questions
+    # Check if the file is a PDF or a text file
+    if file_path.lower().endswith('.pdf'):
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + "\n"
+    else:
+        # Read as a standard text file
+        with open(file_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+
+    # Wrap the extracted text into a QuestionBlock or structured format
+    block = QuestionBlock(raw_text=text)
+    return [block]
